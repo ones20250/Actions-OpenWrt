@@ -1,37 +1,26 @@
-# 开源官方 OpenWrt 插件调整
+# 官方插件
+CONFIG_PACKAGE_luci=y
+CONFIG_LUCI_LANG_zh_Hans=y
 CONFIG_PACKAGE_luci-app-autoreboot=y
 CONFIG_PACKAGE_luci-app-partexp=y
 CONFIG_PACKAGE_luci-app-samba4=y
 CONFIG_PACKAGE_luci-app-sqm=y
-CONFIG_PACKAGE_sqm-scripts-nss=y
 CONFIG_PACKAGE_luci-app-wolplus=y
 CONFIG_PACKAGE_luci-app-sentinel=y
 CONFIG_PACKAGE_luci-app-arpbind=y
 CONFIG_PACKAGE_luci-app-firewall=y
 
-# 删除 ImmortalWrt 独有插件
-CONFIG_PACKAGE_luci-app-attendedsysupgrade=n
-CONFIG_PACKAGE_luci-app-wol=n
-CONFIG_PACKAGE_luci-app-gecoosac=n
-CONFIG_PACKAGE_luci-app-upnp=n
-CONFIG_PACKAGE_luci-app-athena-led=n
-CONFIG_PACKAGE_athena-led-control=n
-
-# 参数调整
+# 内核和系统工具
 CONFIG_CCACHE=y
-CONFIG_DEVEL=n
 CONFIG_KERNEL_CC_OPTIMIZE_FOR_PERFORMANCE=y
+CONFIG_DEVEL=n
 
-# 生成单固件
-CONFIG_TARGET_ROOTFS_INITRAMFS=n
-
-# 官方内核模块保留
+# 官方内核模块
 CONFIG_PACKAGE_kmod-dsa=y
 CONFIG_PACKAGE_kmod-fs-ext4=y
 CONFIG_PACKAGE_kmod-tun=y
 CONFIG_PACKAGE_kmod-usb3=y
 CONFIG_PACKAGE_kmod-usb-core=y
-CONFIG_PACKAGE_kmod-usb-dwc3=y
 CONFIG_PACKAGE_kmod-usb-net=y
 CONFIG_PACKAGE_kmod-usb-net-asix=y
 CONFIG_PACKAGE_kmod-usb-net-asix-ax88179=y
@@ -47,7 +36,7 @@ CONFIG_PACKAGE_kmod-sdhci=y
 CONFIG_PACKAGE_kmod-sdhci-msm=y
 CONFIG_PACKAGE_kmod-fs-ntfs3=y
 
-# 官方基础组件
+# 系统工具
 CONFIG_PACKAGE_autocore=y
 CONFIG_PACKAGE_libopenssl=y
 CONFIG_PACKAGE_libopenssl-conf=y
@@ -80,7 +69,7 @@ CONFIG_PACKAGE_sgdisk=y
 CONFIG_PACKAGE_usb-modeswitch=y
 CONFIG_PACKAGE_usbutils=y
 
-# 官方挂载/分区工具
+# 挂载/分区
 CONFIG_PACKAGE_block-mount=y
 CONFIG_PACKAGE_luci-app-mountd=y
 CONFIG_PACKAGE_resize2fs=y
@@ -89,10 +78,3 @@ CONFIG_PACKAGE_tune2fs=y
 # 无线增强
 CONFIG_PACKAGE_iwinfo=y
 CONFIG_PACKAGE_luci-app-wireless-regdb=y
-
-
-# 注释掉官方没有的设备/Memory profile
-#CONFIG_ATH11K_MEM_PROFILE_1G=n
-#CONFIG_IPQ_MEM_PROFILE_1024=n
-#CONFIG_TARGET_MULTI_PROFILE=n
-#CONFIG_TARGET_PER_DEVICE_ROOTFS=n
