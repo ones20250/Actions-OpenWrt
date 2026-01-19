@@ -152,7 +152,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           # 额外强制安装缺失的 python 依赖
-          ./scripts/feeds install -f python3-pysocks python3-unidecode
+          #./scripts/feeds install -f python3-pysocks python3-unidecode
 
 
       - name: Custom Packages
