@@ -1,6 +1,4 @@
-# 云编译公用核心
 name: WRT-CORE
-
 on:
   workflow_call:
     inputs:
@@ -90,16 +88,14 @@ jobs:
             jq \
             python3-pip
 
-          # 安装 Python 包
           python3 -m pip install --user pysocks unidecode
-
           sudo systemctl daemon-reload
           sudo timedatectl set-timezone "Asia/Shanghai"
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
 
-      - name: Initialization Values
+      - name: Initialize Values
         run: |
           echo "WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
           echo "WRT_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
@@ -108,12 +104,30 @@ jobs:
           echo "WRT_KVER=none" >> $GITHUB_ENV
           echo "WRT_LIST=none" >> $GITHUB_ENV
 
+      - name: Setup ccache and cache paths
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/wrt/.ccache
+          export CCACHE_DIR=$GITHUB_WORKSPACE/wrt/.ccache
+          export USE_CCACHE=1
+          ccache -M 1G
+
+      - name: Restore Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./wrt/staging_dir/host*
+            ./wrt/staging_dir/toolchain*
+            ./wrt/downloads
+            ./wrt/.ccache
+          key: ${{ env.WRT_CONFIG }}-${{ env.WRT_HASH }}
+          restore-keys: |
+            ${{ env.WRT_CONFIG }}-
+
       - name: Clone Code
         run: |
           git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
 
-          # 安全移除国内下载源
           PROJECT_MIRRORS_FILE="./scripts/projectsmirrors.json"
           if [ -f "$PROJECT_MIRRORS_FILE" ]; then
             sed -i 's#https://.*\.cn/#REMOVED#g' "$PROJECT_MIRRORS_FILE"
@@ -146,7 +160,7 @@ jobs:
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL_AX6600.txt >> .config
           fi
           $GITHUB_WORKSPACE/Scripts/Settings.sh
-          make defconfig -j$(nproc) && make clean -j$(nproc)
+          make defconfig -j$(nproc)
 
       - name: Prepare Tools
         if: env.WRT_TEST != 'true'
@@ -164,8 +178,8 @@ jobs:
         if: env.WRT_TEST != 'true'
         run: |
           cd ./wrt/
-          make -j$(nproc) || make -j1 V=s
-          
+          make -j$(nproc) V=s || make -j1 V=s
+
       - name: Machine Information
         run: |
           cd ./wrt/
