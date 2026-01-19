@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       WRT_THEME:
-        required: true
+        required: false
         type: string
       WRT_NAME:
         required: true
@@ -75,7 +75,8 @@ jobs:
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
           sudo -E apt -yqq install dos2unix python3-netifaces libfuse-dev
-          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
+          sudo apt -y install build-essential git-core libncurses5-dev zlib1g-dev gawk flex gettext libssl-dev xsltproc unzip python3-distutils
+
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
 
