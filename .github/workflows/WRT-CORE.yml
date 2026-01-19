@@ -74,6 +74,9 @@ jobs:
             dos2unix \
             python3-netifaces \
             libfuse-dev \
+            libfuse2 \
+            libselinux1-dev \
+            libsepol-dev \
             build-essential \
             git \
             libncurses5-dev \
@@ -84,7 +87,7 @@ jobs:
             libssl-dev \
             xsltproc \
             unzip \
-            python3-distutils
+            python3-venv
 
           sudo systemctl daemon-reload
           sudo timedatectl set-timezone "Asia/Shanghai"
@@ -92,6 +95,7 @@ jobs:
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
+
 
       - name: Initialization Values
         run: |
