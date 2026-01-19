@@ -189,6 +189,18 @@ jobs:
           echo "======================="
           du -h --max-depth=1
           echo "======================="
+      - name: Check Device DTS
+        if: env.WRT_TEST != 'true'
+        run: |
+          TARGET_DTS=$(find ./wrt/build_dir/target-*/*/ -name "*ipq6010-re-cs-02*.dts")
+
+          if [ -z "$TARGET_DTS" ]; then
+            echo "ERROR: JDCloud RE-CS-02 device tree not found! Firmware may not support your device."
+            exit 1
+          else
+            echo "Found JDCloud RE-CS-02 device tree: $TARGET_DTS"
+          fi
+
 
       - name: Package Firmware
         run: |
