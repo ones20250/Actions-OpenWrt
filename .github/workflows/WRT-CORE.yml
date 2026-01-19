@@ -69,7 +69,7 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update -y
-          sudo apt-get upgrade -y
+          #sudo apt-get upgrade -y
           sudo apt-get install -y \
             dos2unix \
             python3-netifaces \
@@ -167,6 +167,12 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Settings.sh
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
+      - name: Prepare Tools
+        if: env.WRT_TEST != 'true'
+        run: |
+         cd ./wrt/
+          make tools/install -j1 V=s
+          
       - name: Download Packages
         if: env.WRT_TEST != 'true'
         run: |
