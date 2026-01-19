@@ -69,7 +69,6 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update -y
-          #sudo apt-get upgrade -y
           sudo apt-get install -y \
             dos2unix \
             python3-netifaces \
@@ -87,15 +86,18 @@ jobs:
             libssl-dev \
             xsltproc \
             unzip \
-            python3-venv
+            python3-venv \
+            jq \
+            python3-pip
+
+          # 安装 Python 包
+          python3 -m pip install --user pysocks unidecode
 
           sudo systemctl daemon-reload
           sudo timedatectl set-timezone "Asia/Shanghai"
-
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
-
 
       - name: Initialization Values
         run: |
@@ -111,37 +113,17 @@ jobs:
           git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
 
-          # 移除国内下载源
+          # 安全移除国内下载源
           PROJECT_MIRRORS_FILE="./scripts/projectsmirrors.json"
           if [ -f "$PROJECT_MIRRORS_FILE" ]; then
-            sed -i '/.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
+            sed -i 's#https://.*\.cn/#REMOVED#g' "$PROJECT_MIRRORS_FILE"
+            sed -i 's#https://.*tencent.*#REMOVED#g' "$PROJECT_MIRRORS_FILE"
+            sed -i 's#https://.*aliyun.*#REMOVED#g' "$PROJECT_MIRRORS_FILE"
           fi
 
       - name: Check Scripts
         run: |
           find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
-
-      - name: Check Caches
-        id: check-cache
-        if: env.WRT_TEST != 'true'
-        uses: actions/cache@v3
-        with:
-          key: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_HASH}}
-          restore-keys: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}
-          path: |
-            ./wrt/.ccache
-            ./wrt/staging_dir/host*
-            ./wrt/staging_dir/tool*
-
-      - name: Update Caches
-        if: env.WRT_TEST != 'true'
-        run: |
-          if [ -d "./wrt/staging_dir" ]; then
-            find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r DIR; do
-              find "$DIR" -type f -exec touch {} +
-            done
-            mkdir -p ./wrt/tmp && echo "1" > ./wrt/tmp/.build
-          fi
 
       - name: Update Feeds
         run: |
@@ -154,7 +136,6 @@ jobs:
         run: |
           cd ./wrt/package/
           $GITHUB_WORKSPACE/Scripts/Packages.sh
-          # Handles.sh 已去掉
 
       - name: Custom Settings
         run: |
@@ -170,9 +151,9 @@ jobs:
       - name: Prepare Tools
         if: env.WRT_TEST != 'true'
         run: |
-         cd ./wrt/
+          cd ./wrt/
           make tools/install -j1 V=s
-          
+
       - name: Download Packages
         if: env.WRT_TEST != 'true'
         run: |
@@ -184,76 +165,3 @@ jobs:
         run: |
           cd ./wrt/
           make -j$(nproc) || make -j1 V=s
-
-      - name: Machine Information
-        run: |
-          cd ./wrt/
-          echo "======================="
-          lscpu | grep -E "name|Core|Thread"
-          echo "======================="
-          df -h
-          echo "======================="
-          du -h --max-depth=1
-          echo "======================="
-      - name: Check Device DTS
-        if: env.WRT_TEST != 'true'
-        run: |
-          TARGET_DTS=$(find ./wrt/build_dir/target-*/*/ -name "*ipq6010-re-cs-02*.dts")
-
-          if [ -z "$TARGET_DTS" ]; then
-            echo "ERROR: JDCloud RE-CS-02 device tree not found! Firmware may not support your device."
-            exit 1
-          else
-            echo "Found JDCloud RE-CS-02 device tree: $TARGET_DTS"
-          fi
-
-
-      - name: Package Firmware
-        run: |
-          cd ./wrt/ && mkdir ./upload/
-          cp -f ./.config ./upload/Config-"$WRT_CONFIG"-"$WRT_INFO"-"$WRT_BRANCH"-"$WRT_DATE".txt
-
-          if [[ $WRT_TEST != 'true' ]]; then
-            echo "WRT_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
-            echo "WRT_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
-
-            find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
-
-            for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*") ; do
-              EXT=$(basename $FILE | cut -d '.' -f 2-)
-              NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($WRT_TARGET\).*")
-              NEW_FILE="$WRT_INFO"-"$WRT_BRANCH"-"$NAME"-"$WRT_DATE"."$EXT"
-              mv -f $FILE ./upload/$NEW_FILE
-            done
-
-            find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
-            make clean -j$(nproc)
-          fi
-
-      - name: Release Firmware
-        uses: softprops/action-gh-release@master
-        with:
-          tag_name: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_BRANCH}}-${{env.WRT_DATE}}
-          files: ./wrt/upload/*.*
-          body: |
-            这是个平台固件包，内含多个设备！
-            请注意选择你需要的设备固件！
-            不要问，刷就完事了！
-
-            全系带开源硬件加速！
-
-            源码：${{env.WRT_REPO}}
-            分支：${{env.WRT_BRANCH}}
-            提交：${{env.WRT_HASH}}
-
-            配置：${{env.WRT_CONFIG}}
-            平台：${{env.WRT_TARGET}}
-
-            登录地址：${{env.WRT_IP}}
-            登录密码：${{env.WRT_PW}}
-
-            WIFI名称：${{env.WRT_SSID}}
-            WIFI密码：${{env.WRT_WORD}}
-
-            内核版本：${{env.WRT_KVER}}
-            插件列表：${{env.WRT_LIST}}
