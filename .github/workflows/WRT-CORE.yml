@@ -111,15 +111,14 @@ jobs:
 
       - name: Clone Code
         run: |
-          git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
+         git clone --single-branch --branch main https://git.openwrt.org/openwrt/openwrt.git ./wrt/
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
-
           # 安全移除国内下载源
           PROJECT_MIRRORS_FILE="./scripts/projectsmirrors.json"
           if [ -f "$PROJECT_MIRRORS_FILE" ]; then
-            sed -i 's#https://.*\.cn/#REMOVED#g' "$PROJECT_MIRRORS_FILE"
-            sed -i 's#https://.*tencent.*#REMOVED#g' "$PROJECT_MIRRORS_FILE"
-            sed -i 's#https://.*aliyun.*#REMOVED#g' "$PROJECT_MIRRORS_FILE"
+          sed -i 's#https://.*\.cn/#REMOVED#g' "$PROJECT_MIRRORS_FILE"
+          sed -i 's#https://.*tencent.*#REMOVED#g' "$PROJECT_MIRRORS_FILE"
+          sed -i 's#https://.*aliyun.*#REMOVED#g' "$PROJECT_MIRRORS_FILE"
           fi
 
       - name: Check Scripts
