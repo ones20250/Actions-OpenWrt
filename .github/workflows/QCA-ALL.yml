@@ -27,8 +27,7 @@ jobs:
       matrix:
         CONFIG: [IPQ60XX-WIFI-YES]
         SOURCE: [openwrt/openwrt]
-        #BRANCH: [main]
-        BRANCH: [snapshot]
+        BRANCH: [main]
 
     uses: ./.github/workflows/WRT-CORE.yml
     with:
