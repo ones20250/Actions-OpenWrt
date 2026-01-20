@@ -154,8 +154,14 @@ jobs:
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL_AX6600.txt >> .config
           fi
           $GITHUB_WORKSPACE/Scripts/Settings.sh
-          make defconfig -j$(nproc) && make clean -j$(nproc)
+          #make defconfig -j$(nproc) && make clean -j$(nproc)
+          make defconfig -j$(nproc)
 
+
+          grep -q "CONFIG_TARGET_DEVICE_ipq60xx_generic_DEVICE_jdcloud_re-cs-02=y" .config || {
+          echo "ERROR: jdcloud_re-cs-02 target missing"
+          exit 1
+          }
       - name: Prepare Tools
         if: env.WRT_TEST != 'true'
         run: |
@@ -173,6 +179,11 @@ jobs:
         run: |
           cd ./wrt/
           make -j$(nproc) || make -j1 V=s
+          ls ./bin/targets/ipq60xx/generic/ || {
+          echo "ERROR: ipq60xx generic output missing"
+          exit 1
+          }
+
 
       - name: Machine Information
         run: |
