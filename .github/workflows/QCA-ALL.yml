@@ -26,7 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         CONFIG: [IPQ60XX-WIFI-YES]
-        SOURCE: [openwrt/openwrt]
+        #SOURCE: [openwrt/openwrt]
+        SOURCE: [ones20250/openwrt]
         BRANCH: [main]
 
     uses: ./.github/workflows/WRT-CORE.yml
